@@ -1,0 +1,21 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="YourNamespace.MainPage">
+    <StackLayout Padding="20" Spacing="10">
+        <Label Text="Upload Files" FontSize="24" HorizontalOptions="Center" />
+        <Button x:Name="ModelUploader" Text="Upload Model" Clicked="ModelUploader_Clicked" />
+        <Button x:Name="InterfaceUploader" Text="Upload Interface" Clicked="InterfaceUploader_Clicked" />
+        <Button x:Name="ControllerUploader" Text="Upload Controller" Clicked="ControllerUploader_Clicked" />
+        <Button x:Name="ServiceUploader" Text="Upload Service" Clicked="ServiceUploader_Clicked" />
+        <Button x:Name="OverrideUploader" Text="Upload Optional Override (optional)" Clicked="OverrideUploader_Clicked" />
+        <Button x:Name="StartupUploader" Text="Upload Startup (optional)" Clicked="StartupUploader_Clicked" />
+        <Button x:Name="DevStandardsUploader" Text="Upload Development Standards" Clicked="DevStandardsUploader_Clicked" />
+        <Button x:Name="UserMessageUploader" Text="Upload User Message" Clicked="UserMessageUploader_Clicked" />
+        <Button x:Name="GenerateOutput" Text="Generate Output" Clicked="GenerateOutput_Clicked" />
+        <Editor x:Name="OutputTextBox" HeightRequest="150" />
+
+        <ComboBox x:Name="UserMessageDropDown" SelectedIndexChanged="UserMessageDropDown_SelectedIndexChanged" />
+        <ComboBox x:Name="DevStandardsDropDown" SelectedIndexChanged="DevStandardsDropDown_SelectedIndexChanged" />
+
+    </StackLayout>
+</ContentPage>
