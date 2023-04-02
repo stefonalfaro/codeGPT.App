@@ -1,12 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Text;
-using Microsoft.Maui.Controls;
-//using Microsoft.Maui.Essentials;
+﻿using System.Text;
 using Microsoft.Extensions.Configuration;
-//using Microsoft.Extensions.Configuration.Binder; // Add this using statement
+using Newtonsoft.Json.Linq;
+using static codeGPT.Models;
 
 namespace codeGPT
 {
@@ -56,11 +51,47 @@ namespace codeGPT
         private async void DevStandardsUploader_Clicked(object sender, EventArgs e)
         {
             await PickAndReadFile(6);
+
+            // Prompt the user to select a file
+            var fileResult = await FilePicker.PickAsync();
+
+            if (fileResult != null)
+            {
+                // Save the file to local storage
+                var localPath = await SaveFileToLocalStorageAsync(fileResult);
+
+                // Update appsettings.json
+                var devStandardsSection = _configuration.GetSection("FileLocations:DevStandards").Get<List<FileLocation>>();
+                devStandardsSection.Add(new FileLocation { DisplayName = fileResult.FileName, Path = localPath });
+
+                await UpdateAppSettingsAsync();
+
+                // Update the DevStandardsDropDown
+                DevStandardsDropDown.ItemsSource = devStandardsSection.Select(x => x.DisplayName).ToList();
+            }
         }
 
         private async void UserMessageUploader_Clicked(object sender, EventArgs e)
         {
             await PickAndReadFile(7);
+
+            // Prompt the user to select a file
+            var fileResult = await FilePicker.PickAsync();
+
+            if (fileResult != null)
+            {
+                // Save the file to local storage
+                var localPath = await SaveFileToLocalStorageAsync(fileResult);
+
+                // Update appsettings.json
+                var userMessageSection = _configuration.GetSection("FileLocations:UserMessage").Get<List<FileLocation>>();
+                userMessageSection.Add(new FileLocation { DisplayName = fileResult.FileName, Path = localPath });
+
+                await UpdateAppSettingsAsync();
+
+                // Update the UserMessageDropDown
+                UserMessageDropDown.ItemsSource = userMessageSection.Select(x => x.DisplayName).ToList();
+            }
         }
 
         private async Task PickAndReadFile(int index)
@@ -69,7 +100,7 @@ namespace codeGPT
             {
                 { DevicePlatform.iOS, new[] { "public.csharp-source" } },
                 { DevicePlatform.Android, new[] { "text/x-csharp" } },
-                { DevicePlatform.UWP, new[] { ".cs" } },
+                { DevicePlatform.WinUI, new[] { ".cs" } },
                 { DevicePlatform.macOS, new[] { "public.csharp-source" } }
             });
 
@@ -93,6 +124,7 @@ namespace codeGPT
             catch (Exception ex)
             {
                 // Handle exceptions
+                throw new Exception(ex.Message);
             }
         }
 
@@ -144,20 +176,19 @@ namespace codeGPT
 
         private void LoadPredefinedFiles()
         {
-            List<string> userMessagePaths = _configuration.GetValue<List<string>>("FileLocations:UserMessage");
-            List<string> devStandardsPaths = _configuration.GetValue<List<string>>("FileLocations:DevStandards");
+            List<FileLocation> userMessagePaths = _configuration.GetValue<List<FileLocation>>("FileLocations:UserMessage");
+            List<FileLocation> devStandardsPaths = _configuration.GetValue<List<FileLocation>>("FileLocations:DevStandards");
 
             if (userMessagePaths != null)
             {
-                UserMessageDropDown.ItemsSource = userMessagePaths;
+                UserMessageDropDown.ItemsSource = userMessagePaths.Select(x => x.DisplayName).ToList();
             }
 
             if (devStandardsPaths != null)
             {
-                DevStandardsDropDown.ItemsSource = devStandardsPaths;
-            }
+                DevStandardsDropDown.ItemsSource = devStandardsPaths.Select(x => x.DisplayName).ToList();
+            }  
         }
-
 
         private async void UserMessageDropDown_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -183,6 +214,33 @@ namespace codeGPT
                     fileContents[6] = await reader.ReadToEndAsync();
                 }
             }
+        }
+
+        private async Task<string> SaveFileToLocalStorageAsync(FileResult fileResult)
+        {
+            var targetPath = Path.Combine(FileSystem.AppDataDirectory, fileResult.FileName);
+
+            using (var sourceStream = await fileResult.OpenReadAsync())
+            using (var targetStream = File.Create(targetPath))
+            {
+                await sourceStream.CopyToAsync(targetStream);
+            }
+
+            return targetPath;
+        }
+
+        private async Task UpdateAppSettingsAsync()
+        {
+            var updatedSettings = new JObject
+            {
+                ["FileLocations"] = new JObject
+                {
+                    ["UserMessage"] = JArray.FromObject(_configuration.GetSection("FileLocations:UserMessage").Get<List<FileLocation>>()),
+                    ["DevStandards"] = JArray.FromObject(_configuration.GetSection("FileLocations:DevStandards").Get<List<FileLocation>>())
+                }
+            };
+            var appSettingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
+            await File.WriteAllTextAsync(appSettingsFilePath, updatedSettings.ToString());
         }
     }
 }
