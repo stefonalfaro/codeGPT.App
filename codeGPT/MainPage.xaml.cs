@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Essentials;
+//using Microsoft.Maui.Essentials;
+using Microsoft.Extensions.Configuration;
+//using Microsoft.Extensions.Configuration.Binder; // Add this using statement
 
-namespace YourNamespace
+namespace codeGPT
 {
     public partial class MainPage : ContentPage
     {
@@ -25,7 +27,6 @@ namespace YourNamespace
         {
             await PickAndReadFile(5);
         }
-
 
         private async void ModelUploader_Clicked(object sender, EventArgs e)
         {
@@ -54,14 +55,13 @@ namespace YourNamespace
 
         private async void DevStandardsUploader_Clicked(object sender, EventArgs e)
         {
-            await PickAndReadFile(6, true);
+            await PickAndReadFile(6);
         }
 
         private async void UserMessageUploader_Clicked(object sender, EventArgs e)
         {
-            await PickAndReadFile(7, true);
+            await PickAndReadFile(7);
         }
-
 
         private async Task PickAndReadFile(int index)
         {
@@ -69,11 +69,11 @@ namespace YourNamespace
             {
                 { DevicePlatform.iOS, new[] { "public.csharp-source" } },
                 { DevicePlatform.Android, new[] { "text/x-csharp" } },
-                { DevicePlatform.Windows, new[] { ".cs" } },
+                { DevicePlatform.UWP, new[] { ".cs" } },
                 { DevicePlatform.macOS, new[] { "public.csharp-source" } }
             });
 
-            FilePickerOptions options = new FilePickerOptions
+            PickOptions options = new PickOptions
             {
                 PickerTitle = $"Select C# File for {GetUploaderName(index)}",
                 FileTypes = fileType
@@ -110,7 +110,6 @@ namespace YourNamespace
             };
         }
 
-
         private void GenerateOutput_Clicked(object sender, EventArgs e)
         {
             ProcessFiles();
@@ -143,14 +142,20 @@ namespace YourNamespace
             Clipboard.SetTextAsync(prompt.ToString());
         }
 
-
         private void LoadPredefinedFiles()
         {
-            List<string> userMessagePaths = _configuration.GetSection("FileLocations:UserMessage").Get<List<string>>();
-            List<string> devStandardsPaths = _configuration.GetSection("FileLocations:DevStandards").Get<List<string>>();
+            List<string> userMessagePaths = _configuration.GetValue<List<string>>("FileLocations:UserMessage");
+            List<string> devStandardsPaths = _configuration.GetValue<List<string>>("FileLocations:DevStandards");
 
-            UserMessageDropDown.ItemsSource = userMessagePaths;
-            DevStandardsDropDown.ItemsSource = devStandardsPaths;
+            if (userMessagePaths != null)
+            {
+                UserMessageDropDown.ItemsSource = userMessagePaths;
+            }
+
+            if (devStandardsPaths != null)
+            {
+                DevStandardsDropDown.ItemsSource = devStandardsPaths;
+            }
         }
 
 
@@ -179,9 +184,5 @@ namespace YourNamespace
                 }
             }
         }
-
-
-
     }
 }
-
